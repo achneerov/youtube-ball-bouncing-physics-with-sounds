@@ -3,19 +3,24 @@ import pymunk
 import math
 import random
 
+
 class Game:
-    def __init__(self):
+    def __init__(self, ball_radius=20):
         # Initialize pygame
         pygame.init()
 
         # Constants
         self.WIDTH, self.HEIGHT = 800, 600
-        self.BALL_RADIUS = 20
+        self.BALL_RADIUS = ball_radius
         self.BOUNDARY_RADIUS = 250
 
         self.cooldown_time = 0.0005  # Cooldown time in seconds
         self.cooldown_timer = 0  # Timer to track cooldown
         self.cooldown_active = False
+
+        pygame.mixer.init()
+        self.collision_sound = pygame.mixer.Sound('cough.wav')  # Replace 'collision.wav' with the actual sound file
+
 
         # Colors
         self.WHITE = (255, 255, 255)
@@ -89,7 +94,6 @@ class Game:
         ball = Ball(x, y, self.BALL_RADIUS, self.space, color)
         return ball
 
-
     def ball_boundary_collision(self, arbiter, space, data):
         # Check if cooldown is active
         if not self.cooldown_active:
@@ -102,12 +106,14 @@ class Game:
 
         return True
 
-
     def ball_ball_collision(self, arbiter, space, data):
         ball1_shape, ball2_shape = arbiter.shapes
         # Find the corresponding ball instances in the self.balls list
         ball1 = next((ball for ball in self.balls if ball.shape == ball1_shape), None)
         ball2 = next((ball for ball in self.balls if ball.shape == ball2_shape), None)
+
+        # Play collision sound
+        self.collision_sound.play()
 
         # Remove both balls from the space
         if ball1 and ball2:
@@ -138,7 +144,6 @@ class Game:
                 if current_time - self.cooldown_timer >= self.cooldown_time * 1000:  # Convert cooldown_time to milliseconds
                     self.cooldown_active = False  # Reset cooldown flag
 
-
     def update_physics(self):
         self.space.step(1 / 60.0)
 
@@ -161,6 +166,7 @@ class Game:
         for ball in self.balls:
             ball.draw(self.screen)
 
+
 class Ball:
     def __init__(self, x, y, radius, space, color):
         self.body = pymunk.Body(1, pymunk.moment_for_circle(1, 0, radius))
@@ -174,14 +180,11 @@ class Ball:
         self.color = color
 
     def draw(self, screen):
-        # Use the stored color to draw the ball
-        pygame.draw.circle(screen, self.color, (int(self.body.position.x), 600 - int(self.body.position.y)), 20)
-
+        # Use the stored color to draw the ball with its actual radius
+        pygame.draw.circle(screen, self.color, (int(self.body.position.x), 600 - int(self.body.position.y)), int(self.shape.radius))
 
 
 if __name__ == "__main__":
-    game = Game()
+    ball_radius = 2
+    game = Game(ball_radius)
     game.run()
-
-
-
